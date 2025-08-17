@@ -1,0 +1,26 @@
+{
+  "name": "@foovoo.deb/foovoo.dev-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "implicitDependencies": [
+      "@foovoo.deb/foovoo.dev"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "options": {
+          "jestConfig": "apps/foovoo.dev-e2e/jest.config.ts",
+          "passWithNoTests": true
+        },
+        "dependsOn": [
+          "@foovoo.deb/foovoo.dev:build",
+          "@foovoo.deb/foovoo.dev:serve"
+        ]
+      }
+    }
+  }
+}
