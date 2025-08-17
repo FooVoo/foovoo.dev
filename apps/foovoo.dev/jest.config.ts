@@ -10,7 +10,7 @@ const swcJestConfig = JSON.parse(
 swcJestConfig.swcrc = false;
 
 export default {
-  displayName: '@foovoo.deb/foovoo.dev',
+  displayName: '@foovoo.dev/foovoo.dev',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
   transform: {

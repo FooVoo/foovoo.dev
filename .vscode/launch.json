@@ -4,12 +4,12 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug @foovoo.deb/foovoo.dev with Nx",
+      "name": "Debug @foovoo.dev/foovoo.dev with Nx",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "nx",
         "serve",
-        "@foovoo.deb/foovoo.dev"
+        "@foovoo.dev/foovoo.dev"
       ],
       "env": {
         "NODE_OPTIONS": "--inspect=9229"

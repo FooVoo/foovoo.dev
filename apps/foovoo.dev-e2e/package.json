@@ -1,10 +1,10 @@
 {
-  "name": "@foovoo.deb/foovoo.dev-e2e",
+  "name": "@foovoo.dev/foovoo.dev-e2e",
   "version": "0.0.1",
   "private": true,
   "nx": {
     "implicitDependencies": [
-      "@foovoo.deb/foovoo.dev"
+      "@foovoo.dev/foovoo.dev"
     ],
     "targets": {
       "e2e": {
@@ -17,8 +17,8 @@
           "passWithNoTests": true
         },
         "dependsOn": [
-          "@foovoo.deb/foovoo.dev:build",
-          "@foovoo.deb/foovoo.dev:serve"
+          "@foovoo.dev/foovoo.dev:build",
+          "@foovoo.dev/foovoo.dev:serve"
         ]
       }
     }

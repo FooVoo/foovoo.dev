@@ -1,5 +1,5 @@
 {
-  "name": "@foovoo.deb/foovoo.dev",
+  "name": "@foovoo.dev/foovoo.dev",
   "version": "0.0.1",
   "private": true,
   "nx": {
@@ -63,15 +63,15 @@
           "build"
         ],
         "options": {
-          "buildTarget": "@foovoo.deb/foovoo.dev:build",
+          "buildTarget": "@foovoo.dev/foovoo.dev:build",
           "runBuildTargetDependencies": false
         },
         "configurations": {
           "development": {
-            "buildTarget": "@foovoo.deb/foovoo.dev:build:development"
+            "buildTarget": "@foovoo.dev/foovoo.dev:build:development"
           },
           "production": {
-            "buildTarget": "@foovoo.deb/foovoo.dev:build:production"
+            "buildTarget": "@foovoo.dev/foovoo.dev:build:production"
           }
         }
       },
