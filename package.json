@@ -75,10 +75,6 @@
     "webpack-cli": "^5.1.4"
   },
   "workspaces": [
-    "apps/*",
-    "apps/ng-resume",
-    "apps/ng-resume-e2e",
-    "apps/foovoo.dev",
-    "apps/foovoo.dev-e2e"
+    "apps/*"
   ]
 }
