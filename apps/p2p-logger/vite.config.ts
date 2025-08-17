@@ -9,11 +9,11 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/apps/p2p-logger',
   server: {
     port: 4300,
-    host: 'localhost',
+    host: true,
   },
   preview: {
     port: 4300,
-    host: 'localhost',
+    host: true,
   },
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   // Uncomment this if you are using workers.
