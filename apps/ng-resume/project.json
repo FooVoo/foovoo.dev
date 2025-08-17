@@ -1,5 +1,5 @@
 {
-  "name": "ng-resume",
+  "name": "@foovoo.dev/ng-resume",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "foovoo-dev",
