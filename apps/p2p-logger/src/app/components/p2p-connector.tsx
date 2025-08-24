@@ -10,6 +10,13 @@ interface P2pConnectorState {
   connectionState: RTCPeerConnectionState;
 }
 
+interface SignalingMessage {
+  type: 'offer' | 'answer' | 'ice-candidate';
+  data: any;
+  targetId?: string;
+  fromId: string;
+}
+
 export class P2pConnector extends Component<unknown, P2pConnectorState> {
   pendingIceCandidates: RTCIceCandidate[] = []; // Queue for early candidates
 
