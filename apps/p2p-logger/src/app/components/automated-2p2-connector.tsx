@@ -3,11 +3,12 @@ import { io, Socket } from 'socket.io-client';
 import { JSX } from 'react';
 
 interface SignalingMessage {
-  type: 'offer' | 'answer' | 'ice-candidate';
-  data: any;
+  type: 'offer' | 'answer' | 'ice-candidate' | 'info';
+  data?: unknown;
   targetId?: string;
-  fromId: string;
+  fromId?: string;
   roomId?: string;
+  peerId?: string;
 }
 
 export class AutomatedP2pConnector extends P2pConnector {
@@ -60,6 +61,7 @@ export class AutomatedP2pConnector extends P2pConnector {
 
     this.socket.on('peer-joined', (data) => {
       console.log('Peer joined room:', data);
+      this.createOffer();
     });
 
     this.socket.on('peer-left', (data) => {
@@ -71,10 +73,36 @@ export class AutomatedP2pConnector extends P2pConnector {
     });
   };
 
+  createConnection = () => {
+    const pc = new RTCPeerConnection({
+      iceServers: [],
+    });
+
+    pc.ondatachannel = (event) => {
+      const channel = event.channel;
+      this.setupDataChannel(channel);
+    };
+
+    pc.onconnectionstatechange = (event) => {
+      console.debug('Connection state changed:', pc.connectionState);
+      this.setState({ connectionState: pc.connectionState });
+    };
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        this.sendIceCandidate(event.candidate);
+      }
+    };
+
+    this.setState({ connection: pc });
+    return pc;
+  };
+
   registerPeer = () => {
     if (!this.socket) return;
 
     this.emitToSocket('register', {
+      type: 'info',
       peerId: this.state.localId,
       roomId: this.currentRoomId,
     });
@@ -84,6 +112,7 @@ export class AutomatedP2pConnector extends P2pConnector {
     if (!this.socket || !this.isRegistered) return;
 
     this.emitToSocket('join-room', {
+      type: 'info',
       peerId: this.state.localId,
       roomId: this.currentRoomId,
     });
@@ -109,12 +138,17 @@ export class AutomatedP2pConnector extends P2pConnector {
       return;
     }
 
-    const pc = this.createConnection();
-    const dataChannel = pc.createDataChannel('messages');
+    let { connection } = this.state;
+
+    if (!connection) {
+      connection = this.createConnection();
+    }
+
+    const dataChannel = connection.createDataChannel('messages');
     this.setupDataChannel(dataChannel);
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+    const offer = await connection.createOffer();
+    await connection.setLocalDescription(offer);
 
     // Send offer via Socket.io
     this.emitToSocket('offer', {
@@ -128,16 +162,22 @@ export class AutomatedP2pConnector extends P2pConnector {
   override createAnswer = async (offerData: string) => {
     if (!this.socket || !this.isRegistered) return;
 
-    const pc = this.createConnection();
+    let { connection } = this.state;
+
+    if (!connection) {
+      connection = this.createConnection();
+    }
+
     const offer = JSON.parse(offerData);
 
-    await pc.setRemoteDescription(offer);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
+    await connection.setRemoteDescription(offer);
+    const answer = await connection.createAnswer();
+    await connection.setLocalDescription(answer);
 
     this.emitToSocket('answer', {
       type: 'answer',
       data: answer,
+      targetId: offer.fromId,
       fromId: this.state.localId,
       roomId: this.currentRoomId,
     });
@@ -183,7 +223,7 @@ export class AutomatedP2pConnector extends P2pConnector {
     }
   };
 
-  emitToSocket(event: string, data: any) {
+  emitToSocket(event: string, data: SignalingMessage) {
     if (this.socket) {
       this.socket.emit(event, {
         data,

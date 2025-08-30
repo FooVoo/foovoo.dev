@@ -10,13 +10,6 @@ interface P2pConnectorState {
   connectionState: RTCPeerConnectionState;
 }
 
-interface SignalingMessage {
-  type: 'offer' | 'answer' | 'ice-candidate';
-  data: any;
-  targetId?: string;
-  fromId: string;
-}
-
 export class P2pConnector extends Component<unknown, P2pConnectorState> {
   pendingIceCandidates: RTCIceCandidate[] = []; // Queue for early candidates
 
@@ -77,7 +70,6 @@ export class P2pConnector extends Component<unknown, P2pConnectorState> {
 
   handleAnswer = async (answerSdp: string) => {
     const { connection } = this.state;
-    console.debug('Handling answer:', connection);
 
     if (!connection) return;
 
@@ -92,50 +84,21 @@ export class P2pConnector extends Component<unknown, P2pConnectorState> {
   };
 
   createAnswer = async (offerSdp: string) => {
-    const pc = this.createConnection();
+    const { connection } = this.state;
+
+    if (!connection) return;
 
     try {
       const offer = JSON.parse(offerSdp);
-      await pc.setRemoteDescription(offer);
+      await connection.setRemoteDescription(offer);
 
       await this.processPendingIceCandidates();
 
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-
-      console.log('Answer SDP:', JSON.stringify(answer));
-      setTimeout(() => {
-        navigator.clipboard.writeText(JSON.stringify(answer));
-      }, 300);
+      const answer = await connection.createAnswer();
+      await connection.setLocalDescription(answer);
     } catch (error) {
       console.error('Error creating answer:', error);
     }
-  };
-
-  createConnection = () => {
-    const pc = new RTCPeerConnection({
-      iceServers: [],
-    });
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        console.log('ICE Candidate:');
-        console.log(JSON.stringify(event.candidate));
-      }
-    };
-
-    pc.ondatachannel = (event) => {
-      const channel = event.channel;
-      this.setupDataChannel(channel);
-    };
-
-    pc.onconnectionstatechange = (event) => {
-      console.debug('Connection state changed:', pc.connectionState);
-      this.setState({ connectionState: pc.connectionState });
-    };
-
-    this.setState({ connection: pc });
-    return pc;
   };
 
   setupDataChannel = (channel: RTCDataChannel) => {
@@ -154,16 +117,14 @@ export class P2pConnector extends Component<unknown, P2pConnectorState> {
   };
 
   createOffer = async () => {
-    const pc = this.createConnection();
-    const dataChannel = pc.createDataChannel('messages');
+    const { connection } = this.state;
+    if (!connection) return;
+
+    const dataChannel = connection.createDataChannel('messages');
     this.setupDataChannel(dataChannel);
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    console.log('Offer SDP:', JSON.stringify(offer));
-    navigator.clipboard.writeText(JSON.stringify(offer));
-    // alert(`Share this offer with the other device:\n${JSON.stringify(offer)}`);
+    const offer = await connection.createOffer();
+    await connection.setLocalDescription(offer);
   };
 
   sendMessage = (message: string) => {
@@ -184,34 +145,6 @@ export class P2pConnector extends Component<unknown, P2pConnectorState> {
         <h1>P2P Connector</h1>
         <p>Local ID: {localId}</p>
         <p>Status: {connectionState}</p>
-
-        <div style={{ marginBottom: '20px' }}>
-          <button onClick={this.createOffer}>Create Offer</button>
-          <button
-            onClick={() => {
-              const sdp = prompt('Paste offer SDP:');
-              if (sdp) this.createAnswer(sdp);
-            }}
-          >
-            Accept Offer
-          </button>
-          <button
-            onClick={() => {
-              const sdp = prompt('Paste ICE candidate:');
-              if (sdp) this.addIceCandidate(sdp);
-            }}
-          >
-            Add ICE Candidate
-          </button>
-          <button
-            onClick={() => {
-              const sdp = prompt('Paste answer SDP:');
-              if (sdp) this.handleAnswer(sdp);
-            }}
-          >
-            Complete Connection
-          </button>
-        </div>
 
         {isConnected && (
           <div>

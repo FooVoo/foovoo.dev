@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
   WebSocketGateway,
-  WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Socket, Server } from 'socket.io';
+import { Socket } from 'socket.io';
 import * as interfaces from './interfaces';
-import { P2pServerAdapter } from './p2p-server.adapter';
 
 @Injectable()
 @WebSocketGateway(80, {
@@ -18,10 +16,10 @@ import { P2pServerAdapter } from './p2p-server.adapter';
   namespace: '/p2p',
 })
 export class P2pService implements OnGatewayConnection, OnGatewayDisconnect {
-  peers: Map<string, interfaces.PeerConnection> = new Map();
-  rooms: Map<string, Set<string>> = new Map();
+  readonly peers: Map<string, interfaces.PeerConnection> = new Map();
+  readonly rooms: Map<string, Set<string>> = new Map();
 
-  constructor(private serverAdapter: P2pServerAdapter) {}
+  constructor() {}
 
   handleConnection(client: Socket): void {
     console.log(`Client connected: ${client.id}`);
@@ -41,6 +39,7 @@ export class P2pService implements OnGatewayConnection, OnGatewayDisconnect {
 
   leaveRoom(socketId: string, roomId: string) {
     const room = this.rooms.get(roomId);
+
     if (room) {
       room.delete(socketId);
       if (room.size === 0) {
@@ -49,7 +48,7 @@ export class P2pService implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  private findSocketByPeerId(peerId: string): string | null {
+  private _findSocketByPeerId(peerId: string): string | null {
     for (const [socketId, peer] of this.peers.entries()) {
       if (peer.peerId === peerId) {
         return socketId;
@@ -58,31 +57,39 @@ export class P2pService implements OnGatewayConnection, OnGatewayDisconnect {
     return null;
   }
 
-  getRoomPeers(roomId: string, excludeSocketId: string): string[] {
+  getRoomPeers(roomId: string, excludeSocketId?: string): string[] {
     const room = this.rooms.get(roomId);
     if (!room) return [];
 
     const peers: string[] = [];
-    room.forEach((socketId) => {
-      if (socketId !== excludeSocketId) {
-        const peer = this.peers.get(socketId);
-        if (peer) {
-          peers.push(peer.peerId);
-        }
+
+    for (const socketId of room) {
+      const peer = this.peers.get(socketId);
+      if (!peer) continue;
+
+      if (!excludeSocketId) {
+        peers.push(peer.peerId);
+      } else if (socketId !== excludeSocketId) {
+        peers.push(peer.peerId);
       }
-    });
+    }
 
     return peers;
   }
 
   removePeer(socketId: string) {
     const peer = this.peers.get(socketId);
+
     if (peer) {
       if (peer.roomId) {
         this.leaveRoom(socketId, peer.roomId);
       }
       this.peers.delete(socketId);
     }
+  }
+
+  isClientRegistered(socketId: string): boolean {
+    return this.peers.has(socketId);
   }
 
   getConnectedPeers(): interfaces.PeerConnection[] {
@@ -93,9 +100,10 @@ export class P2pService implements OnGatewayConnection, OnGatewayDisconnect {
     roomId: string,
   ): { roomId: string; peerCount: number; peers: string[] } | null {
     const room = this.rooms.get(roomId);
+
     if (!room) return null;
 
-    const peers = this.getRoomPeers(roomId, '');
+    const peers = this.getRoomPeers(roomId);
     return {
       roomId,
       peerCount: room.size,
@@ -105,19 +113,5 @@ export class P2pService implements OnGatewayConnection, OnGatewayDisconnect {
 
   getAllRooms(): string[] {
     return Array.from(this.rooms.keys());
-  }
-
-  public broadcastToRoom(
-    roomId: string,
-    message: { type: string; data: unknown },
-  ): void {
-    const room = this.rooms.get(roomId);
-    if (!room) {
-      throw new Error('Room not found');
-    }
-
-    room.forEach((socketId) => {
-      this.serverAdapter.server.to(socketId).emit(message.type, message);
-    });
   }
 }
