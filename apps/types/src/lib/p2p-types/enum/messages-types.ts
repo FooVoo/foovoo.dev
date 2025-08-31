@@ -1,4 +1,4 @@
-export enum SignalType {
+export enum SignalingType {
   OFFER = 'offer',
   ANSWER = 'answer',
   ICE_CANDIDATE = 'ice-candidate',

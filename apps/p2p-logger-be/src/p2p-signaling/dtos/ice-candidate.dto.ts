@@ -1,14 +1,13 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import * as socketIoAdapter from 'socket.io-adapter';
-import { SignalType } from '../enums';
+import { IceCandidateMessage, SignalingType } from '@foovoo.dev/types';
 
-export class IceCandidateDto {
+export class IceCandidateDto implements IceCandidateMessage {
   @IsNotEmpty()
-  @IsEnum(SignalType)
-  type: SignalType.ICE_CANDIDATE;
+  @IsEnum(SignalingType)
+  type: SignalingType.ICE_CANDIDATE;
 
   @IsNotEmpty()
-  roomId: socketIoAdapter.Room;
+  roomId: string;
 
   @IsNotEmpty()
   @IsString()

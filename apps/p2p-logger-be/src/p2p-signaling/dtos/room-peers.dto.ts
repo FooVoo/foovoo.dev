@@ -1,12 +1,11 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import * as socketIoAdapter from 'socket.io-adapter';
-import { SignalType } from '../enums';
+import { RoomPeers, SignalingType } from '@foovoo.dev/types';
 
-export class RoomPeersDto {
+export class RoomPeersDto implements RoomPeers {
   @IsNotEmpty()
-  @IsEnum(SignalType)
-  type: SignalType.ROOMS_PEERS;
+  @IsEnum(SignalingType)
+  type: SignalingType.ROOMS_PEERS;
 
   @IsNotEmpty()
-  roomId: socketIoAdapter.Room;
+  roomId: string;
 }

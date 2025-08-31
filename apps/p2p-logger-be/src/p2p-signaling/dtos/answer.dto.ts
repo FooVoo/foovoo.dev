@@ -1,18 +1,17 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import * as socketIoAdapter from 'socket.io-adapter';
-import { SignalType } from '../enums';
+import { AnswerMessage, SignalingType } from '@foovoo.dev/types';
 
-export class AnswerDto {
+export class AnswerDto implements AnswerMessage {
   @IsNotEmpty()
-  @IsEnum(SignalType)
-  type: SignalType.ANSWER;
+  @IsEnum(SignalingType)
+  type: SignalingType.ANSWER;
 
   @IsNotEmpty()
   @IsString()
   targetId: string;
 
   @IsNotEmpty()
-  roomId: socketIoAdapter.Room;
+  roomId: string;
 
   @IsNotEmpty()
   @IsString()

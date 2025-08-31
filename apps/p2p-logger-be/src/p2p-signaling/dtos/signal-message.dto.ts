@@ -1,9 +1,10 @@
 import { IsNotEmpty, IsEnum } from 'class-validator';
-import { SignalType } from '../enums';
+import { SignalingType, SignalMessage } from '@foovoo.dev/types';
 
-export class SignalMessageDto {
+export class SignalMessageDto implements SignalMessage {
   @IsNotEmpty()
-  @IsEnum(SignalType)
-  type: SignalType.SIGNAL;
+  @IsEnum(SignalingType)
+  type: SignalingType.SIGNAL;
+
   data: unknown;
 }

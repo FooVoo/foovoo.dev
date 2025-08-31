@@ -1,0 +1,19 @@
+{
+  "name": "@foovoo.dev/types",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/types/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/types",
+        "main": "apps/types/src/index.ts",
+        "tsConfig": "apps/types/tsconfig.lib.json",
+        "assets": ["apps/types/*.md"]
+      }
+    }
+  }
+}

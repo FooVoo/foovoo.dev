@@ -1,12 +1,16 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { SignalType } from '../enums/signaling';
+import { RegisterMessage, SignalingType } from '@foovoo.dev/types';
 
-export class RegisterDto {
+export class RegisterDto implements RegisterMessage {
   @IsNotEmpty()
-  @IsEnum(SignalType)
-  type: SignalType.REGISTER;
+  @IsEnum(SignalingType)
+  type: SignalingType.REGISTER;
 
   @IsNotEmpty()
   @IsString()
   peerId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  roomId: string;
 }

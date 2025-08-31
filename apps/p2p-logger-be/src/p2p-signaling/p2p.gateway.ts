@@ -9,12 +9,18 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { P2pService } from './p2p.service';
-import { Logger, ValidationPipe } from '@nestjs/common';
-import { AnswerDto, OfferDto, SignalMessageDto } from './dtos';
-import { RoomPeersDto } from './dtos/room-peers.dto';
-import { IceCandidateDto } from './dtos/ice-candidate.dto';
-import { RegisterDto } from './dtos/register.dto';
-import { SignalType } from './enums';
+import { Logger } from '@nestjs/common';
+import {
+  AnswerDto,
+  IceCandidateDto,
+  JoinRoomDto,
+  LeaveRoomDto,
+  OfferDto,
+  RegisterDto,
+  RoomPeersDto,
+  SignalMessageDto,
+} from './dtos';
+import { SignalingType } from '@foovoo.dev/types';
 
 /**
  * WebSocket gateway for P2P signaling.
@@ -62,18 +68,13 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param client Connected socket
    * @param data Room and peer information
    */
-  @SubscribeMessage(SignalType.JOIN_ROOM)
+  @SubscribeMessage(SignalingType.JOIN_ROOM)
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody('data', new ValidationPipe())
-    data: { roomId: string; peerId: string },
+    @MessageBody('data')
+    data: JoinRoomDto,
   ) {
     if (!this._isClientRegistered(client)) return;
-
-    if (client.rooms.size > 0) {
-      client.emit('error', { message: 'Peer already in a room' });
-      return;
-    }
 
     const { roomId, peerId } = data;
 
@@ -85,7 +86,10 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    client.emit('joined-room', data);
+    client.emit('joined-room', {
+      peerId: peerId,
+      peerCount: this.p2pService.rooms.get(roomId)?.size,
+    });
 
     client.to(roomId).emit('peer-joined', { peerId, socketId: client.id });
 
@@ -98,10 +102,10 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param client Connected socket
    * @param data Room and peer information
    */
-  @SubscribeMessage(SignalType.LEAVE_ROOM)
+  @SubscribeMessage(SignalingType.LEAVE_ROOM)
   async handleLeaveRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody('data') data: { roomId: string; peerId: string },
+    @MessageBody('data') data: LeaveRoomDto,
   ) {
     if (!this._isClientRegistered(client)) return;
 
@@ -137,7 +141,7 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param client Connected socket
    * @param data Signaling message data
    */
-  @SubscribeMessage(SignalType.SIGNAL)
+  @SubscribeMessage(SignalingType.SIGNAL)
   handleSignal(
     @ConnectedSocket() client: Socket,
     @MessageBody('data')
@@ -154,20 +158,30 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param data Peer registration data
    * @param client Connected socket
    */
-  @SubscribeMessage(SignalType.REGISTER)
+  @SubscribeMessage(SignalingType.REGISTER)
   handleRegister(
     @MessageBody('data') data: RegisterDto,
     @ConnectedSocket() client: Socket,
   ) {
-    if (this._isClientRegistered(client)) {
+    if (this.p2pService.isClientRegistered(client.id)) {
       client.emit('error', { message: 'Peer already registered' });
       Logger.error(`Peer already registered: ${data.peerId}`);
       return;
     }
 
-    client.emit('registered', { success: true, peerId: data.peerId });
+    this.p2pService.peers.set(client.id, {
+      peerId: data.peerId,
+      roomId: data.roomId,
+      socketId: client.id,
+    });
 
-    Logger.log(`Peer registered: ${data.peerId}`);
+    client.emit('registered', {
+      success: true,
+      peerId: data.peerId,
+      roomId: data.roomId,
+    });
+
+    Logger.log(`Peer registered: ${data.peerId} in ${data.roomId}`);
   }
 
   /**
@@ -176,7 +190,7 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param message Signaling message
    * @param client Connected socket
    */
-  @SubscribeMessage(SignalType.OFFER)
+  @SubscribeMessage(SignalingType.OFFER)
   handleOffer(
     @MessageBody('data') message: OfferDto,
     @ConnectedSocket() client: Socket,
@@ -207,7 +221,9 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     if (message.targetId) {
-      client.to(message.targetId).emit('offer', message);
+      client
+        .to(message.roomId)
+        .emit('offer', { ...message, fromId: peer.peerId });
       Logger.log(`Peer offer to target:${peer.peerId} -> ${message.targetId}`);
       return;
     }
@@ -222,7 +238,7 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param message Signaling message
    * @param client Connected socket
    */
-  @SubscribeMessage(SignalType.ANSWER)
+  @SubscribeMessage(SignalingType.ANSWER)
   handleAnswer(
     @MessageBody('data') message: AnswerDto,
     @ConnectedSocket() client: Socket,
@@ -263,7 +279,7 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param message Signaling message
    * @param client Connected socket
    */
-  @SubscribeMessage(SignalType.ICE_CANDIDATE)
+  @SubscribeMessage(SignalingType.ICE_CANDIDATE)
   handleIceCandidate(
     @MessageBody('data') message: IceCandidateDto,
     @ConnectedSocket() client: Socket,
@@ -277,8 +293,14 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
+    if (!peer.roomId) {
+      client.emit('error', { message: 'Peer not in a room' });
+      Logger.error(`Peer not in room: ${client.id}`);
+      return;
+    }
+
     client.in(peer.roomId).emit('ice-candidate', message);
-    console.log('Peer ICE candidate:', peer.peerId);
+    Logger.log('Peer ICE candidate:', peer.peerId);
   }
 
   /**
@@ -287,7 +309,7 @@ export class P2pGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param data Room information
    * @param client Connected socket
    */
-  @SubscribeMessage(SignalType.ROOMS_PEERS)
+  @SubscribeMessage(SignalingType.ROOMS_PEERS)
   handleGetRoomPeers(
     @MessageBody('data') data: RoomPeersDto,
     @ConnectedSocket() client: Socket,
