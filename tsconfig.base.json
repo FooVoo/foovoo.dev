@@ -18,6 +18,8 @@
     "strict": true,
     "target": "es2022",
     "customConditions": ["development"],
+    "baseUrl": ".",
+    "rootDir": ".",
     "paths": {
       "@foovoo.dev/types": ["apps/types/src/index.ts"]
     }

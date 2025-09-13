@@ -1,7 +1,7 @@
 import { SignalingType } from '../enum';
 
-export interface IIceCandidateMessage {
+export type IceCandidateMessageType = {
   type: SignalingType.ICE_CANDIDATE;
   roomId: string;
   data: string;
-}
+};

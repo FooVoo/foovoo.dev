@@ -1,6 +1,6 @@
 import { SignalingType } from '../enum';
 
-export interface RegisterMessage {
+export interface IRegisterMessage {
   type: SignalingType.REGISTER;
   roomId: string;
   peerId: string;

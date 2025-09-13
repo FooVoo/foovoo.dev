@@ -1,7 +1,7 @@
-import { JoinRoomMessage, SignalingType } from '@foovoo.dev/types';
+import { IJoinRoomMessage, SignalingType } from '@foovoo.dev/types';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
-export class JoinRoomDto implements JoinRoomMessage {
+export class JoinRoomDto implements IJoinRoomMessage {
   @IsNotEmpty()
   @IsEnum(SignalingType)
   type: SignalingType.JOIN_ROOM;

@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
-import { OfferMessage, SignalingType } from '@foovoo.dev/types';
+import { IOfferMessage, SignalingType } from '@foovoo.dev/types';
 
-export class OfferDto implements OfferMessage {
+export class OfferDto implements IOfferMessage {
   @IsNotEmpty()
   @IsEnum(SignalingType)
   type: SignalingType.OFFER;

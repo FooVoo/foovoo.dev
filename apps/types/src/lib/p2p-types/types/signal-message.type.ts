@@ -1,6 +1,6 @@
 import { SignalingType } from '../enum';
 
-export interface ISignalMessage<DataType = unknown> {
+export type SignalMessageType<DataType = unknown> = {
   type: SignalingType.SIGNAL;
   data: DataType;
-}
+};

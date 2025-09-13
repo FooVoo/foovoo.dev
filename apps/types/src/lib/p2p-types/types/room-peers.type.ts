@@ -1,6 +1,6 @@
 import { SignalingType } from '../enum';
 
-export interface IRoomPeers {
+export type RoomPeersType = {
   type: SignalingType.ROOMS_PEERS;
   roomId: string;
-}
+};

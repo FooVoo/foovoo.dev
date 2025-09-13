@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { IceCandidateMessage, SignalingType } from '@foovoo.dev/types';
+import { IIceCandidateMessage, SignalingType } from '@foovoo.dev/types';
 
-export class IceCandidateDto implements IceCandidateMessage {
+export class IceCandidateDto implements IIceCandidateMessage {
   @IsNotEmpty()
   @IsEnum(SignalingType)
   type: SignalingType.ICE_CANDIDATE;

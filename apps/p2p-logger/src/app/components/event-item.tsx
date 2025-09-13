@@ -1,9 +1,13 @@
 import { Component } from 'react';
 import { IEventItem } from './events-list';
 
-export class EventItem extends Component<IEventItem> {
+interface EventItemProps {
+  event: IEventItem;
+}
+
+export class EventItem extends Component<EventItemProps, unknown> {
   override render() {
-    const { id, type, timestamp, message } = this.props;
+    const { id, type, timestamp, message } = this.props.event;
 
     return (
       <div className={`event-item event-item--${type}`} key={id}>

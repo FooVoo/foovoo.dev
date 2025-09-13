@@ -9,11 +9,6 @@ import {
 } from '@nestjs/common';
 import { P2pService } from './p2p.service';
 
-interface CreateRoomDto {
-  roomId: string;
-  peerId: string;
-}
-
 interface SendMessageDto {
   type: 'offer' | 'answer' | 'ice-candidate';
   data: unknown;

@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { RoomPeers, SignalingType } from '@foovoo.dev/types';
+import { IRoomPeers, SignalingType } from '@foovoo.dev/types';
 
-export class RoomPeersDto implements RoomPeers {
+export class RoomPeersDto implements IRoomPeers {
   @IsNotEmpty()
   @IsEnum(SignalingType)
   type: SignalingType.ROOMS_PEERS;

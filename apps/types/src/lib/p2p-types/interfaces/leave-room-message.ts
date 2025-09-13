@@ -1,6 +1,6 @@
-import { SignalingType } from '@foovoo.dev/types';
+import { SignalingType } from '../enum';
 
-export interface LeaveRoomMessage {
+export interface ILeaveRoomMessage {
   type: SignalingType.LEAVE_ROOM;
   roomId: string;
   peerId: string;

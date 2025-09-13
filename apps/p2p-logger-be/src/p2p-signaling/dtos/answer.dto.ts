@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { AnswerMessage, SignalingType } from '@foovoo.dev/types';
+import { IAnswerMessage, SignalingType } from '@foovoo.dev/types';
 
-export class AnswerDto implements AnswerMessage {
+export class AnswerDto implements IAnswerMessage {
   @IsNotEmpty()
   @IsEnum(SignalingType)
   type: SignalingType.ANSWER;

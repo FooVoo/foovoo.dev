@@ -1,4 +1,4 @@
-import { Component, useCallback, useState } from 'react';
+import { Component } from 'react';
 import { EventItem } from './event-item';
 
 interface IEventsListProps {
